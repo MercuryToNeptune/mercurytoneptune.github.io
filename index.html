@@ -9,9 +9,11 @@
             --bg-color: #020617;
             --text-color: #f8fafc;
             --bar-bg: #1e293b;
-            --accent-1: #3b82f6;
-            --accent-2: #10b981;
-            /* New Slate shades for text hierarchy */
+            --accent-1: #f59e0b; 
+            --accent-2: #fef08a; 
+            --bee-body: #fbbf24;
+            --bee-stripes: #0f172a;
+            --bee-wings: rgba(255, 255, 255, 0.4);
             --text-muted: #64748b;
             --text-dim: #334155;
         }
@@ -32,7 +34,6 @@
             max-width: 600px;
             width: 90%;
             text-align: center;
-            /* Soft entrance animation for the whole UI */
             animation: fadeIn 1.5s ease-out;
         }
 
@@ -49,7 +50,7 @@
         .subtitle {
             color: var(--text-muted);
             font-size: clamp(0.75rem, 2.5vw, 0.85rem);
-            margin-bottom: 48px;
+            margin-bottom: 30px; 
             text-transform: uppercase;
             letter-spacing: 0.2em;
             font-weight: 500;
@@ -63,10 +64,193 @@
             margin-top: 4px;
         }
 
+        /* --- THE PROGRESS ARENA --- */
+        .progress-arena {
+            position: relative;
+            width: 100%;
+            margin-bottom: 20px;
+            /* Extra room for the bee to fly high high up in arcs */
+            padding-top: 150px; 
+        }
+
+        /* --- THE BEE FINAL LOCATION (Transitions only horizontal pos) --- */
+        .bee-wrapper {
+            position: absolute;
+            bottom: 24px; 
+            left: 0%; 
+            width: 0;
+            height: 0;
+            z-index: 10;
+            transition: left 2.5s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* --- NEW: THE ARC SWIMMER --- */
+        /* This element handles the swoop-in animation using layered transforms */
+        .bee-swimmer {
+            position: absolute;
+            width: 0; height: 0;
+            left: 0; top: 0;
+            /* Animates relative to final position */
+            /* Start state (outside arena, top left) */
+            transform: translate(-300px, -150px) rotate(0deg); 
+            animation: flightArcs 5.5s ease-out forwards;
+        }
+
+        .bee-container {
+            position: absolute;
+            width: 32px;
+            height: 24px;
+            left: -16px; 
+            bottom: 0px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Final resting pose */
+            transform: translateY(2px) rotate(20deg); 
+            transform-origin: center center;
+        }
+
+        .bee-body {
+            width: 18px;
+            height: 14px;
+            background-color: var(--bee-body);
+            border-radius: 12px;
+            position: relative;
+            background-image: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 4px,
+                var(--bee-stripes) 4px,
+                var(--bee-stripes) 8px
+            );
+        }
+
+        .bee-head {
+            position: absolute;
+            width: 8px;
+            height: 10px;
+            background-color: var(--bee-body);
+            border-radius: 6px;
+            right: -2px;
+            top: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+        }
+        .bee-head::before, .bee-head::after {
+            content: '';
+            width: 2.5px;
+            height: 2.5px;
+            background-color: var(--bee-stripes);
+            border-radius: 50%;
+        }
+
+        .bee-body::after {
+            content: '';
+            position: absolute;
+            width: 1.5px;
+            height: 8px;
+            background-color: var(--bee-stripes);
+            border-radius: 2px;
+            top: -6px;
+            right: 0px;
+            transform: rotate(20deg);
+            box-shadow: -4px 0px 0 var(--bee-stripes);
+        }
+
+        .bee-wings {
+            position: absolute;
+            width: 16px;
+            height: 10px;
+            top: 1px; 
+            left: 2px; 
+            display: flex;
+            justify-content: space-between;
+        }
+        .bee-wing {
+            width: 8px;
+            height: 9px;
+            background-color: var(--bee-wings);
+            border-radius: 50% 50% 2px 2px;
+            transform-origin: bottom center;
+            /* Fast flapping during flight */
+            animation: wing-flap 0.03s infinite alternate linear;
+        }
+        .bee-wing.right {
+            animation-delay: 0.015s;
+        }
+
+        @keyframes wing-flap {
+            from { transform: rotateX(0deg) rotate(-10deg); }
+            to { transform: rotateX(70deg) rotate(-10deg); }
+        }
+
+        /* --- LANDING LOGIC (Synced with 5.5s flight) --- */
+        .bee-wrapper.landed .bee-wing {
+            animation: fold-wings 0.4s forwards ease-out;
+        }
+        
+        .bee-wrapper.landed .bee-container {
+            animation: bee-breathe 4s infinite ease-in-out;
+        }
+
+        @keyframes fold-wings {
+            to { 
+                transform: rotateX(75deg) rotate(-25deg); 
+                background-color: rgba(255, 255, 255, 0.15); 
+            }
+        }
+
+        @keyframes bee-breathe {
+            0%, 100% { transform: translateY(2px) rotate(20deg); }
+            50% { transform: translateY(0px) rotate(22deg); }
+        }
+
+        /* --- THE CIRCULAR ARC FLIGHT PATH --- */
+        /* Instead of linear translates, we use simultaneous rotation & translation 
+           relative to a point outside the container to force perfect arcs. */
+        @keyframes flightArcs {
+            0% { 
+                /* Start far outside arena top-left */
+                transform-origin: 200px 300px; /* Hinge point relative to wrapper */
+                transform: rotate(-50deg) translate(-100px) rotate(50deg);
+                opacity: 0;
+            }
+            15% {
+                /* Sweeping swoop in */
+                opacity: 1;
+                transform: rotate(-15deg) translate(-30px) rotate(15deg);
+            }
+            30% {
+                /* Lazy wide arc high high up near the right edge */
+                transform: rotate(25deg) translate(-220px) rotate(-25deg);
+            }
+            /* Start a tight loop-the-loop relative to arrival zone */
+            50% {
+                /* Shift transform origin high above final touchdown for loop */
+                transform-origin: 0px -60px; 
+                transform: rotate(0deg) translate(0px) rotate(0deg);
+            }
+            70% {
+                /* Top of the loop */
+                transform: rotate(180deg) translate(0px) rotate(-180deg);
+            }
+            90% {
+                /* bottom of loop, glide in */
+                transform: rotate(340deg) translate(-30px) rotate(-340deg);
+            }
+            100% { 
+                /* smooth touchdown at relative 0,0 */
+                transform: rotate(360deg) translate(0px) rotate(-360deg);
+                opacity: 1; 
+            }
+        }
+
+        /* --- PROGRESS BAR --- */
         .progress-wrapper {
             background-color: var(--bar-bg);
             border-radius: 40px;
-            height: 24px; /* Slightly slimmer for a sleeker look */
+            height: 24px; 
             width: 100%;
             position: relative;
             overflow: hidden;
@@ -83,7 +267,7 @@
             position: relative;
             transition: width 2.5s cubic-bezier(0.22, 1, 0.36, 1);
             animation: flow 3s linear infinite;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
         }
 
         .progress-fill::after {
@@ -93,7 +277,7 @@
             background: linear-gradient(
                 90deg,
                 transparent 0%,
-                rgba(255, 255, 255, 0.2) 50%,
+                rgba(255, 255, 255, 0.3) 50%,
                 transparent 100%
             );
             background-size: 200% 100%;
@@ -118,8 +302,7 @@
         .stats {
             display: flex;
             justify-content: space-between;
-            margin-top: 20px;
-            /* Using monospace so the "DAYS" text doesn't shift when numbers change */
+            margin-top: 12px;
             font-family: 'JetBrains Mono', 'Courier New', monospace;
             font-size: 0.75rem;
             font-weight: 500;
@@ -161,7 +344,6 @@
             padding-top: 20px;
         }
 
-        /* Styling for mobile to ensure clear breathing room */
         @media (max-width: 480px) {
             .footer-note {
                 font-size: 0.75rem;
@@ -173,14 +355,32 @@
 <body>
 
 <div class="container">
+    
     <h1>Five Year Horizon</h1>
+    
     <p class="subtitle">
-        How do you achieve the impossible? 
+        How do you achieve the impossible? <br>
         <span>One step after another.</span>
     </p>
 
-    <div class="progress-wrapper">
-        <div class="progress-fill" id="progress-fill"></div>
+    <div class="progress-arena">
+        <div class="bee-wrapper" id="bee-wrapper">
+            <div class="bee-swimmer" id="bee-swimmer">
+                <div class="bee-container">
+                    <div class="bee-wings">
+                        <span class="bee-wing left"></span>
+                        <span class="bee-wing right"></span>
+                    </div>
+                    <div class="bee-body">
+                        <span class="bee-head"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="progress-wrapper">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
     </div>
 
     <div class="stats">
@@ -200,6 +400,7 @@
 
 <script>
     function updateProgress() {
+        // Timeline Definition: 2025-04-01 to 2030-04-01
         const startDate = new Date('2025-04-01T00:00:00').getTime();
         const endDate = new Date('2030-04-01T00:00:00').getTime();
         const now = new Date().getTime();
@@ -207,28 +408,43 @@
         const totalDuration = endDate - startDate;
         const passedDuration = now - startDate;
 
+        // Calculate responsive percentage (clamped 0-100)
         let percentage = (passedDuration / totalDuration) * 100;
-        
-        if (percentage < 0) percentage = 0;
-        if (percentage > 100) percentage = 100;
+        percentage = Math.max(0, Math.min(100, percentage));
 
+        // Calculate days passed
         const daysPassed = Math.floor(passedDuration / (1000 * 60 * 60 * 24));
         
+        // Target DOM elements
         const fill = document.getElementById('progress-fill');
+        const beeWrap = document.getElementById('bee-wrapper');
         const pctText = document.getElementById('percentage-text');
         const daysText = document.getElementById('days-text');
 
+        // Apply visual updates with slight delay for the entrance sequence
         setTimeout(() => {
+            // Fill the bar
             fill.style.width = percentage + '%';
+            // Position the bee's horizontal final location
+            beeWrap.style.left = percentage + '%';
+            
+            // Wait for the longer CSS flight path (5.5s) to finish before "landing"
+            setTimeout(() => {
+                // Folds wings, angles down, starts breathing
+                beeWrap.classList.add('landed');
+            }, 5600); 
+
         }, 100);
 
-        // Using 4 decimals to ensure the user sees movement
+        // Update statistical numbers
         pctText.innerText = percentage.toFixed(4) + '%';
         daysText.innerText = (daysPassed > 0 ? daysPassed : 0) + ' DAYS IN';
     }
 
+    // Run immediately on page load
     updateProgress();
-    setInterval(updateProgress, 5000); // Updated to 5 seconds for smoother tracking
+    // Keep data fresh periodically
+    setInterval(updateProgress, 5000); 
 </script>
 
 </body>
