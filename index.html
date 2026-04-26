@@ -64,36 +64,31 @@
             margin-top: 4px;
         }
 
-        /* --- THE PROGRESS ARENA --- */
         .progress-arena {
             position: relative;
             width: 100%;
             margin-bottom: 20px;
-            /* Extra room for the bee to fly high high up in arcs */
             padding-top: 150px; 
         }
 
-        /* --- THE BEE FINAL LOCATION (Transitions only horizontal pos) --- */
+        /* --- THE BEE WRAPPER (Horizontal Progress) --- */
         .bee-wrapper {
             position: absolute;
             bottom: 24px; 
             left: 0%; 
-            width: 0;
-            height: 0;
+            width: 0; height: 0;
             z-index: 10;
             transition: left 2.5s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        /* --- NEW: THE ARC SWIMMER --- */
-        /* This element handles the swoop-in animation using layered transforms */
+        /* --- THE BEE SWIMMER (Delayed Arc Flight) --- */
         .bee-swimmer {
             position: absolute;
             width: 0; height: 0;
             left: 0; top: 0;
-            /* Animates relative to final position */
-            /* Start state (outside arena, top left) */
-            transform: translate(-300px, -150px) rotate(0deg); 
-            animation: flightArcs 5.5s ease-out forwards;
+            opacity: 0; /* Hidden initially */
+            /* 3s Initial Delay + 6s Flight Duration */
+            animation: flightArcs 6s cubic-bezier(0.45, 0, 0.55, 1) 3s forwards;
         }
 
         .bee-container {
@@ -105,7 +100,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            /* Final resting pose */
             transform: translateY(2px) rotate(20deg); 
             transform-origin: center center;
         }
@@ -173,19 +167,16 @@
             background-color: var(--bee-wings);
             border-radius: 50% 50% 2px 2px;
             transform-origin: bottom center;
-            /* Fast flapping during flight */
             animation: wing-flap 0.03s infinite alternate linear;
         }
-        .bee-wing.right {
-            animation-delay: 0.015s;
-        }
+        .bee-wing.right { animation-delay: 0.015s; }
 
         @keyframes wing-flap {
             from { transform: rotateX(0deg) rotate(-10deg); }
             to { transform: rotateX(70deg) rotate(-10deg); }
         }
 
-        /* --- LANDING LOGIC (Synced with 5.5s flight) --- */
+        /* --- LANDING LOGIC --- */
         .bee-wrapper.landed .bee-wing {
             animation: fold-wings 0.4s forwards ease-out;
         }
@@ -206,42 +197,31 @@
             50% { transform: translateY(0px) rotate(22deg); }
         }
 
-        /* --- THE CIRCULAR ARC FLIGHT PATH --- */
-        /* Instead of linear translates, we use simultaneous rotation & translation 
-           relative to a point outside the container to force perfect arcs. */
+        /* --- ARC FLIGHT PATH (Starts from Upper Left) --- */
         @keyframes flightArcs {
             0% { 
-                /* Start far outside arena top-left */
-                transform-origin: 200px 300px; /* Hinge point relative to wrapper */
-                transform: rotate(-50deg) translate(-100px) rotate(50deg);
+                /* Start off-screen top-left */
+                transform: translate(-400px, -300px) rotate(-45deg);
                 opacity: 0;
             }
-            15% {
-                /* Sweeping swoop in */
+            10% {
                 opacity: 1;
-                transform: rotate(-15deg) translate(-30px) rotate(15deg);
             }
             30% {
-                /* Lazy wide arc high high up near the right edge */
-                transform: rotate(25deg) translate(-220px) rotate(-25deg);
+                /* Large circular swoop */
+                transform: translate(-100px, -200px) rotate(20deg);
             }
-            /* Start a tight loop-the-loop relative to arrival zone */
-            50% {
-                /* Shift transform origin high above final touchdown for loop */
-                transform-origin: 0px -60px; 
-                transform: rotate(0deg) translate(0px) rotate(0deg);
+            60% {
+                /* Loop high above the progress */
+                transform: translate(150px, -150px) rotate(-10deg);
             }
-            70% {
-                /* Top of the loop */
-                transform: rotate(180deg) translate(0px) rotate(-180deg);
-            }
-            90% {
-                /* bottom of loop, glide in */
-                transform: rotate(340deg) translate(-30px) rotate(-340deg);
+            85% {
+                /* Glide into final approach */
+                transform: translate(50px, -50px) rotate(5deg);
             }
             100% { 
-                /* smooth touchdown at relative 0,0 */
-                transform: rotate(360deg) translate(0px) rotate(-360deg);
+                /* Land exactly at progress line */
+                transform: translate(0px, 0px) rotate(0deg);
                 opacity: 1; 
             }
         }
@@ -270,28 +250,9 @@
             box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
         }
 
-        .progress-fill::after {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(
-                90deg,
-                transparent 0%,
-                rgba(255, 255, 255, 0.3) 50%,
-                transparent 100%
-            );
-            background-size: 200% 100%;
-            animation: sparkle 4s infinite;
-        }
-
         @keyframes flow {
             0% { background-position: 0% 50%; }
             100% { background-position: 200% 50%; }
-        }
-
-        @keyframes sparkle {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
         }
 
         @keyframes fadeIn {
@@ -343,21 +304,12 @@
             border-top: 1px solid var(--text-dim);
             padding-top: 20px;
         }
-
-        @media (max-width: 480px) {
-            .footer-note {
-                font-size: 0.75rem;
-                margin-top: 60px;
-            }
-        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    
     <h1>Five Year Horizon</h1>
-    
     <p class="subtitle">
         How do you achieve the impossible? <br>
         <span>One step after another.</span>
@@ -400,7 +352,6 @@
 
 <script>
     function updateProgress() {
-        // Timeline Definition: 2025-04-01 to 2030-04-01
         const startDate = new Date('2025-04-01T00:00:00').getTime();
         const endDate = new Date('2030-04-01T00:00:00').getTime();
         const now = new Date().getTime();
@@ -408,42 +359,32 @@
         const totalDuration = endDate - startDate;
         const passedDuration = now - startDate;
 
-        // Calculate responsive percentage (clamped 0-100)
         let percentage = (passedDuration / totalDuration) * 100;
         percentage = Math.max(0, Math.min(100, percentage));
 
-        // Calculate days passed
         const daysPassed = Math.floor(passedDuration / (1000 * 60 * 60 * 24));
         
-        // Target DOM elements
         const fill = document.getElementById('progress-fill');
         const beeWrap = document.getElementById('bee-wrapper');
         const pctText = document.getElementById('percentage-text');
         const daysText = document.getElementById('days-text');
 
-        // Apply visual updates with slight delay for the entrance sequence
         setTimeout(() => {
-            // Fill the bar
             fill.style.width = percentage + '%';
-            // Position the bee's horizontal final location
             beeWrap.style.left = percentage + '%';
             
-            // Wait for the longer CSS flight path (5.5s) to finish before "landing"
+            // 3s delay + 6s flight = 9s until landing class is applied
             setTimeout(() => {
-                // Folds wings, angles down, starts breathing
                 beeWrap.classList.add('landed');
-            }, 5600); 
+            }, 9100); 
 
         }, 100);
 
-        // Update statistical numbers
         pctText.innerText = percentage.toFixed(4) + '%';
         daysText.innerText = (daysPassed > 0 ? daysPassed : 0) + ' DAYS IN';
     }
 
-    // Run immediately on page load
     updateProgress();
-    // Keep data fresh periodically
     setInterval(updateProgress, 5000); 
 </script>
 
